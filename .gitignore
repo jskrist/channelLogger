@@ -1,6 +1,7 @@
 *~
 *.swp
 botToken.txt
+data.json
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
