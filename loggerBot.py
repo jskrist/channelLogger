@@ -4,14 +4,55 @@ from discord.ext import commands
 from tinydb import TinyDB, Query
 from tinydb.operations import delete, increment
 
-
+'''
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	SETUP
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+'''
 # Create a bot
 bot = Bot(description="Channel Logger Bot by jskrist#3569", command_prefix="!", pm_help = True)
 # Start or connect to a database to log the messages
 db = TinyDB('data.json')
 # This is a Query object to use when searching through the database
 msg = Query()
+usr = Query()
+'''
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	HELPER FUNCTIONS
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+'''
+# this function returns a list of all the users that have posted to the server
+def getPostingUsers():
+	postingUsers = set();
+	for item in db:
+		postingUsers.add(item['authorName'])
 
+	return postingUsers
+
+async def addMsgToDB(message):
+	# Confirm that the message did not come from this Bot to make sure we don't get
+	# into an infinite loop if this bot send out any messages in this function also
+	# check that the first character of the message is not a "!" or "]", which would
+	# indicate a command
+	if (message.author.id != bot.user.id) & \
+					(message.content[0] != '!') & (message.content[0] != ']'):
+		# debug code, this repeats anything that other users send to the server
+		await bot.send_message(message.channel, message.author.name + ' says: ' + message.content)
+		# if the mesage content is not in the database yet
+		if not db.search(msg.content == message.content.lower()):
+			# send a debug message
+			await bot.send_message(message.channel, 'New Message')
+			# Insert the content into the database, along with the name of the user that posted it.
+			# You could add any other data to the database at this point.
+			#
+			# Consider filtering out messages that start with '!' or other command characters
+			# also consider using message.content.lower() to make sure "Hi", hI, and "hi" are all the same
+			db.insert({'content': message.content.lower(), 'authorName': message.author.name})
+'''
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	BOT EVENTS AND COMMANDS
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+'''
 # This function prints a message to the terminal/command window to let you know the bot started correctly
 @bot.event
 async def on_ready():
@@ -20,21 +61,30 @@ async def on_ready():
 # when a message comes into the server, this function is executed
 @bot.listen()
 async def on_message(message):
-	# Confirm that the message did not come from this Bot to make sure we don't get
-	# into an infinite loop if this bot send out any messages in this function
-	if message.author.id != bot.user.id:
-		# debug code, this repeats anything that other users send to the server
-		await bot.send_message(message.channel, message.author.name + ' says: ' + message.content)
-		# if the mesage content is not in the database yet
-		if not db.search(msg.content == message.content):
-			# send a debug message
-			await bot.send_message(message.channel, 'New Message')
-			# Insert the content into the database, along with the name of the user that posted it.
-			# You could add any other data to the database at this point.
-			#
-			# Consider filtering out messages that start with '!' or other command characters
-			# also consider using message.content.lower() to make sure "Hi", hI, and "hi" are all the same
-			db.insert({'content': message.content, 'authorName': message.author.name})
+	await addMsgToDB(message)
+
+# when a message on the server is edited, this function is executed
+@bot.listen()
+async def on_message_edit(msgBefore, msgAfter):
+	'''
+	 update the database to reflect only the edited message.  This could create a state where a
+	 duplicate message is on the server, but not represented in the database, e.g.
+
+	 User1 sends "Hello"
+	 User2 sends "Hello"
+
+	 Database no has {'content':"hello", "authorName":"User1"}
+
+	 User1 edits post to say "Hello World"
+
+	 Database now has {'content':"hello world", "authorName":"User1"}
+	 Should it also contain a copy of the message "hello"? since User2 also sent it?
+	'''
+	# db.update({'content': msgAfter.content.lower()}, msg.content == msgBefore.content.lower())
+	'''
+	 Alternatively, you could just add the updated message to the database:
+	'''
+	await addMsgToDB(msgAfter)
 
 # this command prints out the contents of the database.  It should not be used with a large database.
 # the database will be save into a file called data.json (see line 12 of this file).
@@ -54,13 +104,23 @@ async def stats(context):
 		userMsgs = db.search(msg.authorName == user)
 		await bot.send_message(context.message.channel, '{0} has {1} messages'.format(user, len(userMsgs)))
 
-# this function returns a list of all the users that have posted to the server
-def getPostingUsers():
-	postingUsers = set();
-	for item in db:
-		postingUsers.add(item['authorName'])
+# this command removes all of messages from the Database
+@bot.command(pass_context=True)
+async def clearDB_all(context):
+	await bot.send_message(context.message.channel, 'ack')
+	db.purge()
 
-	return postingUsers
+# this command removes all of messages in the Database from the given user
+@bot.command(pass_context=True)
+async def clearDB_usr(context, User=""):
+	await bot.send_message(context.message.channel, 'ack')
+	db.remove(usr.authorName == User)
+
+# this command removes the given messages from the Database if it exists
+@bot.command(pass_context=True)
+async def clearDB_msg(context, Msg=""):
+	await bot.send_message(context.message.channel, 'ack')
+	db.remove(msg.content == Msg.lower())
 
 # this opens up a file named botToken.txt which should contain a single line of text; the bot's token
 with open('botToken.txt', 'r') as myfile:
