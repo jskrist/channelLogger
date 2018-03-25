@@ -36,17 +36,10 @@ async def addMsgToDB(message):
 	# indicate a command
 	if (message.author.id != bot.user.id) & \
 					(message.content[0] != '!') & (message.content[0] != ']'):
-		# debug code, this repeats anything that other users send to the server
-		await bot.send_message(message.channel, message.author.name + ' says: ' + message.content)
 		# if the mesage content is not in the database yet
 		if not db.search(msg.content == message.content.lower()):
-			# send a debug message
-			await bot.send_message(message.channel, 'New Message')
 			# Insert the content into the database, along with the name of the user that posted it.
 			# You could add any other data to the database at this point.
-			#
-			# Consider filtering out messages that start with '!' or other command characters
-			# also consider using message.content.lower() to make sure "Hi", hI, and "hi" are all the same
 			db.insert({'content': message.content.lower(), 'authorName': message.author.name})
 '''
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -86,42 +79,42 @@ async def on_message_edit(msgBefore, msgAfter):
 	'''
 	await addMsgToDB(msgAfter)
 
-# this command prints out the contents of the database.  It should not be used with a large database.
-# the database will be save into a file called data.json (see line 12 of this file).
 @bot.command(pass_context=True)
 async def printDB(context):
-	await bot.send_message(context.message.channel, 'ack')
+	# this command prints out the contents of the database.  It should not be used with a large database.
+	# the database will be save into a file called data.json (see line 12 of this file).
 	for item in db:
 		await bot.send_message(context.message.channel, item)
 
-# this command returns the stats for each user, at the moment that is just the number of messages
-# each user has posted, but could be expanded however you'd like
 @bot.command(pass_context=True)
 async def stats(context):
-	await bot.send_message(context.message.channel, 'ack')
+	# this command returns the stats for each user, at the moment that is just the number of messages
+	# each user has posted, but could be expanded however you'd like
 	postingUsers = getPostingUsers()
 	for user in postingUsers:
 		userMsgs = db.search(msg.authorName == user)
 		await bot.send_message(context.message.channel, '{0} has {1} messages'.format(user, len(userMsgs)))
 
-# this command removes all of messages from the Database
 @bot.command(pass_context=True)
 async def clearDB_all(context):
-	await bot.send_message(context.message.channel, 'ack')
+	# this command removes all of messages from the Database
 	db.purge()
 
-# this command removes all of messages in the Database from the given user
 @bot.command(pass_context=True)
 async def clearDB_usr(context, User=""):
-	await bot.send_message(context.message.channel, 'ack')
+	# this command removes all of messages in the Database from the given user
 	db.remove(usr.authorName == User)
 
-# this command removes the given messages from the Database if it exists
 @bot.command(pass_context=True)
 async def clearDB_msg(context, Msg=""):
-	await bot.send_message(context.message.channel, 'ack')
+	# this command removes the given messages from the Database if it exists
 	db.remove(msg.content == Msg.lower())
 
+'''
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	STARTING THE BOT
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+'''
 # this opens up a file named botToken.txt which should contain a single line of text; the bot's token
 with open('botToken.txt', 'r') as myfile:
     botToken = myfile.read().replace('\n', '')
