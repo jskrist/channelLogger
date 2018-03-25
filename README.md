@@ -38,5 +38,5 @@ You will need to update different sections of this code for your needs, i.e.
 
 Read through the commands and helper files, and feel free to tweak any logic you need to for this bot to do what you want, with one exception:
 
-_The end of the file opens the "botToken.txt" file and uses the token stored in there to run the bot.  You are welcome to change the name of the file being read to correspond to the file you created, but I **strongly** suugest, not hardcoding the bot token in this file._
+_The end of the file opens the "botToken.txt" file and uses the token stored in there to run the bot.  You are welcome to change the name of the file being read to correspond to the file you created, but I **strongly** suggest, not hard-coding the bot token in this file._
 
