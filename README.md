@@ -1,5 +1,5 @@
 # channelLogger
-This is a bot that logs unique messages from a Discord channel and information about the user that posted the message.  It also allows for management of this data, so you can get a report of how many messages each user has contributed, as well as delete entries from the log either by user, or by message, or wipe the entire log.  It is intended to be a starter bot that introduces some of the basic staeps required to create a bot.
+This is a bot that logs unique messages from a Discord channel and information about the user that posted the message.  It also allows for management of this data, so you can get a report of how many messages each user has contributed, as well as delete entries from the log either by user, or by message, or wipe the entire log.  It is intended to be a starter bot that introduces some of the basic steps required to create a bot.
 
 ## How to create a Discord Bot
 
